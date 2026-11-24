@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="bn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta property="og:title" content="Pagli r Jonmodin" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%96%3C/text%3E%3C/svg%3E" />
+    <title>Pagli r Jonmodin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #fff5f7;
+        --card: #ffffff;
+        --ink: #47222f;
+        --muted: #9a6472;
+        --accent: #e8447c;
+        --accent-dark: #c92a5e;
+        --accent-soft: #ffe3ec;
+        --border: #f5c3d3;
+        --stage: #ffeef3;
+        --shadow: 0 10px 30px rgba(201, 42, 94, 0.14);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #201016;
+          --card: #311824;
+          --ink: #ffedf2;
+          --muted: #d69cae;
+          --accent: #ff6b9d;
+          --accent-dark: #ff8fb3;
+          --accent-soft: #472233;
+          --border: #5c2c40;
+          --stage: #2a141f;
+          --shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        font-family: "Poppins", system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+      }
+      button { font-family: inherit; cursor: pointer; }
+
+      /* ---------- floating hearts backdrop ---------- */
+      .bg-hearts { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+      .bg-hearts span { position: absolute; bottom: -40px; opacity: 0.16; animation: floatUp linear infinite; }
+      @keyframes floatUp { to { transform: translateY(-110dvh) rotate(24deg); } }
+      @media (prefers-reduced-motion: reduce) {
+        .bg-hearts span { animation: none; }
+      }
+
+      /* ---------- lock screen ---------- */
+      #lockView {
+        position: relative; z-index: 1;
+        flex: 1; display: flex; align-items: center; justify-content: center;
+        padding: 20px;
+      }
+      .lock-card {
+        background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+        box-shadow: var(--shadow); padding: 34px 26px; text-align: center;
+        max-width: 380px; width: 100%;
+      }
+      .lock-emoji { font-size: 62px; line-height: 1; }
+      .lock-card h1 { font-size: 22px; margin: 14px 0 6px; }
+      .lock-card p { color: var(--muted); margin: 0 0 18px; font-size: 15px; }
+      .lock-row { display: flex; gap: 8px; }
+      .lock-row input {
+        flex: 1; min-width: 0; padding: 12px 14px; font-size: 16px; font-family: inherit;
+        border: 2px solid var(--border); border-radius: 12px; background: var(--bg); color: var(--ink);
+        min-height: 48px;
+      }
+      .lock-row input:focus { outline: none; border-color: var(--accent); }
+      .btn {
+        border: none; border-radius: 12px; background: var(--accent); color: #fff;
+        font-weight: 600; font-size: 16px; padding: 12px 20px; min-height: 48px;
+        transition: background 0.15s ease, transform 0.1s ease;
+      }
+      .btn:active { transform: scale(0.97); }
+      .btn:hover { background: var(--accent-dark); }
+      .lock-error { color: var(--accent-dark); font-size: 14px; min-height: 20px; margin-top: 12px; font-weight: 500; }
+      .shake { animation: shake 0.4s ease; }
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-8px); }
+        75% { transform: translateX(8px); }
+      }
+
+      /* ---------- game shell ---------- */
+      #gameView { position: relative; z-index: 1; flex: 1; display: none; flex-direction: column; min-height: 0; }
+      .topbar {
+        display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        padding: 12px 16px; background: var(--card); border-bottom: 1px solid var(--border);
+      }
+      .topbar .name { font-weight: 700; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .topbar .step-count { color: var(--muted); font-size: 13px; font-weight: 600; white-space: nowrap; }
+      .progress { height: 5px; background: var(--accent-soft); }
+      .progress > div { height: 100%; background: var(--accent); width: 0%; transition: width 0.35s ease; border-radius: 0 4px 4px 0; }
+
+      .stage { flex: 1; overflow-y: auto; min-height: 0; padding: 20px 16px 28px; }
+      .step { display: none; max-width: 640px; margin: 0 auto; animation: stepIn 0.3s ease; }
+      .step.active { display: block; }
+      @keyframes stepIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+      @media (prefers-reduced-motion: reduce) { .step { animation: none; } }
+
+      .card {
+        background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+        box-shadow: var(--shadow); padding: 22px 20px;
+      }
+      .letter-text { font-size: 16.5px; line-height: 1.75; white-space: pre-wrap; word-break: break-word; margin: 0; }
+      h2.step-title { font-size: 21px; margin: 0 0 14px; text-align: center; }
+
+      .footer {
+        padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+        background: var(--card); border-top: 1px solid var(--border);
+        display: flex; justify-content: center; align-items: center; min-height: 78px;
+      }
+      .next-btn {
+        font-size: 18px; font-weight: 700; padding: 14px 44px; border-radius: 999px;
+        min-width: min(78vw, 320px); min-height: 54px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+        box-shadow: 0 8px 20px rgba(201, 42, 94, 0.35);
+      }
+      .next-btn:hover { background: linear-gradient(135deg, var(--accent), var(--accent-dark)); filter: brightness(1.07); }
+      .next-btn[hidden] { display: none; }
+      .inline-next {
+        display: block; margin: 22px auto 4px; font-size: 18px; font-weight: 700;
+        padding: 14px 44px; border-radius: 999px; min-width: min(78vw, 320px); min-height: 54px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+        box-shadow: 0 8px 20px rgba(201, 42, 94, 0.35);
+      }
+
+      /* ---------- media slots ---------- */
+      .slot {
+        border: 2px dashed var(--border); border-radius: 16px; background: var(--stage);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 8px; text-align: center; padding: 26px 16px; color: var(--muted); font-weight: 500;
+      }
+      .slot .slot-emoji { font-size: 44px; }
+      .player-card { text-align: center; }
+      .player-card .disc { font-size: 64px; line-height: 1.2; }
+      .song-video {
+        width: min(100%, 320px); max-height: 58dvh; aspect-ratio: 480 / 864;
+        object-fit: contain; background: #000; border-radius: 14px;
+        display: block; margin: 0 auto;
+      }
+      .step7-video {
+        width: min(100%, 320px); max-height: 62dvh; aspect-ratio: 720 / 1280;
+        object-fit: contain; background: #000; border-radius: 14px;
+        display: block; margin: 0 auto;
+      }
+      .step9-video {
+        width: min(100%, 320px); max-height: 62dvh; aspect-ratio: 720 / 1280;
+        object-fit: contain; background: #000; border-radius: 14px;
+        display: block; margin: 0 auto;
+      }
+      .horror-video {
+        width: min(100%, 320px); max-height: 62dvh; aspect-ratio: 472 / 850;
+        object-fit: contain; background: #000; border-radius: 14px;
+        display: block; margin: 0 auto;
+      }
+      .step6-after { margin-top: 16px; }
+      .player-controls { display: flex; gap: 12px; justify-content: center; margin-top: 14px; }
+      .ctrl-btn {
+        border: 2px solid var(--border); background: var(--card); color: var(--ink);
+        border-radius: 999px; font-size: 16px; font-weight: 600; padding: 11px 22px; min-height: 48px;
+      }
+      .ctrl-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .bar-track { height: 8px; border-radius: 99px; background: var(--accent-soft); margin: 18px auto 4px; max-width: 340px; overflow: hidden; }
+      .bar-fill { height: 100%; width: 0%; background: var(--accent); }
+
+      /* ---------- wheel ---------- */
+      .wheel-wrap { position: relative; width: min(82vw, 330px); margin: 6px auto 4px; }
+      .wheel-pointer {
+        position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+        font-size: 30px; z-index: 2; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25));
+      }
+      #wheel { width: 100%; height: auto; display: block; border-radius: 50%; box-shadow: var(--shadow); }
+      .spin-btn { display: block; margin: 16px auto 0; font-size: 17px; padding: 13px 34px; border-radius: 999px; }
+      .wheel-result { text-align: center; margin-top: 16px; min-height: 30px; font-size: 18px; font-weight: 700; }
+      .wheel-note { text-align: center; color: var(--muted); font-size: 14.5px; margin-top: 6px; }
+      .ss-btn { display: block; margin: 14px auto 0; font-size: 17px; padding: 13px 34px; border-radius: 999px; }
+      .ss-btn[hidden] { display: none; }
+      .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+      .congrats { text-align: center; font-size: 19px; font-weight: 700; margin-top: 10px; }
+
+      /* ---------- archery game ---------- */
+      .hud {
+        display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px;
+        font-weight: 700; font-size: 15px;
+      }
+      .hud .pill { background: var(--card); border: 1px solid var(--border); border-radius: 999px; padding: 7px 16px; box-shadow: var(--shadow); }
+      #archStage {
+        position: relative; height: 340px; border-radius: 18px; overflow: hidden;
+        background: linear-gradient(180deg, var(--accent-soft), var(--stage));
+        border: 1px solid var(--border);
+      }
+      #girl { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 52px; z-index: 3; }
+      #aimLine {
+        position: absolute; left: 66px; right: 8px; border-top: 2px dashed var(--accent);
+        opacity: 0.45; z-index: 1; pointer-events: none;
+      }
+      #target { position: absolute; z-index: 2; display: flex; align-items: center; gap: 2px; transition: top 0.35s ease, right 0.35s ease; }
+      #boy { font-size: 54px; }
+      #heart { font-size: 42px; display: inline-block; animation: bob 1.1s ease-in-out infinite; }
+      @keyframes bob { 0%, 100% { transform: translateY(-9px); } 50% { transform: translateY(9px); } }
+      #arrowEl { position: absolute; font-size: 30px; z-index: 4; display: none; pointer-events: none; }
+      .shoot-btn { display: block; margin: 14px auto 0; font-size: 17px; padding: 13px 30px; border-radius: 999px; }
+      .arch-msg { text-align: center; font-weight: 600; min-height: 24px; margin-top: 10px; font-size: 15.5px; }
+      .arch-win { text-align: center; font-size: 19px; font-weight: 700; margin-top: 12px; line-height: 1.6; }
+      .float-note {
+        position: absolute; z-index: 5; font-weight: 800; font-size: 18px; color: var(--accent-dark);
+        pointer-events: none; animation: floatNote 0.9s ease forwards;
+      }
+      @keyframes floatNote { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-34px); } }
+
+      /* ---------- step 8 options ---------- */
+      .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 6px; }
+      .opt-btn {
+        border: 2px solid var(--border); background: var(--card); color: var(--ink);
+        border-radius: 14px; font-size: 18px; font-weight: 700; padding: 16px 10px; min-height: 58px;
+        transition: border-color 0.15s ease, background 0.15s ease;
+      }
+      .opt-btn:hover, .opt-btn.picked { border-color: var(--accent); background: var(--accent-soft); }
+      .married-msg { text-align: center; font-size: 19px; font-weight: 700; line-height: 1.65; margin-top: 18px; }
+
+      /* ---------- photos ---------- */
+      .photo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 10px; margin-bottom: 18px; }
+      .photo-slot {
+        aspect-ratio: 3 / 4; border: 2px dashed var(--border); border-radius: 14px; background: var(--stage);
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+        color: var(--muted); font-size: 13px; font-weight: 500; text-align: center; padding: 8px;
+      }
+      .photo-slot .slot-emoji { font-size: 30px; }
+      .photo-img {
+        width: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: block;
+        border-radius: 14px; border: 1px solid var(--border); box-shadow: var(--shadow);
+        background: var(--stage);
+      }
+      .letter-from { text-align: right; font-weight: 700; margin-top: 14px; }
+
+      /* ---------- final ---------- */
+      .final-wrap { text-align: center; padding-top: 26px; }
+      .final-cake { font-size: 84px; line-height: 1.1; }
+      .final-title { font-size: clamp(26px, 7vw, 38px); font-weight: 800; margin: 14px 0 8px; line-height: 1.3; }
+      .final-sub { color: var(--muted); font-size: 16px; }
+      .the-end { margin-top: 34px; font-size: 20px; font-weight: 700; letter-spacing: 2px; }
+
+      /* ---------- toast ---------- */
+      #toast {
+        position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%) translateY(20px);
+        background: var(--ink); color: var(--bg); padding: 11px 20px; border-radius: 999px;
+        font-size: 14.5px; font-weight: 500; opacity: 0; pointer-events: none; transition: opacity 0.25s ease, transform 0.25s ease;
+        z-index: 50; max-width: 88vw; text-align: center;
+      }
+      #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    </style>
+  </head>
+  <body>
+    <div class="bg-hearts" aria-hidden="true">
+      <span style="left:6%; font-size:20px; animation-duration:15s;">💗</span>
+      <span style="left:22%; font-size:15px; animation-duration:19s; animation-delay:3s;">💖</span>
+      <span style="left:45%; font-size:24px; animation-duration:17s; animation-delay:1s;">💕</span>
+      <span style="left:66%; font-size:16px; animation-duration:21s; animation-delay:5s;">💗</span>
+      <span style="left:84%; font-size:21px; animation-duration:16s; animation-delay:2s;">💖</span>
+      <span style="left:94%; font-size:14px; animation-duration:20s; animation-delay:7s;">💕</span>
+    </div>
+
+    <!-- ================= LOCK ================= -->
+    <div id="lockView">
+      <div class="lock-card" id="lockCard">
+        <div class="lock-emoji">🔒</div>
+        <h1>Eta sudhu tomar jonno 💖</h1>
+        <p>Lock khulte password dao</p>
+        <form class="lock-row" id="lockForm">
+          <input type="password" id="lockInput" placeholder="Password" autocomplete="off" aria-label="Password" />
+          <button type="submit" class="btn">Khulo 🔓</button>
+        </form>
+        <div class="lock-error" id="lockError"></div>
+      </div>
+    </div>
+
+    <!-- ================= GAME ================= -->
+    <div id="gameView">
+      <div class="topbar">
+        <div class="name">💖 Pagli r Jonmodin</div>
+        <div class="step-count" id="stepCount">Step 1 / 10</div>
+      </div>
+      <div class="progress"><div id="progressFill"></div></div>
+
+      <div class="stage" id="stage">
+
+        <!-- STEP 1 -->
+        <section class="step" data-step="1">
+          <div class="card">
+            <p class="letter-text">Hi Romaisa
+Kemon aco.? Ki kortaso? Portaso pakhi.? poro 😒😒
+Happii birthday my cute wifee 🥹🥹🥹🥹
+Dinta tomar onek Khushi r hok issh khushi te tomar sathe thakte partam ☹️
+Acchha amrra ki ajke dekha korte pari?? Dinta katailam tomar Sathe.? Boilo amare uttor ta diyo 🥹🥹
+Dua kori amar pakhi sob somoy jat a sustho thake Ar hasi khushi thake ar amare jat a beshi beshi valo basho kom baiso na edaning Tik moto kotha bolo bolo je valo lage na Kotha bolte amar sathe buji jani mon thika bolo na kintu eta sotti je ekhon tik moto kotha bolo na ajke boilo ajker din ta tomar kase special 🥹
+Happiii birthday My babyyy, 🥹💋💋💋💋💋💋💋💋💋💋
+Lovee youuu amar lokkhi bouu 💋💋💋💋💋💋💋💋💋💋💋
+Lovee youuu sooooo muchhhh Kolizaaa 💋💋💋💋💋💋💋💋💋💋💋💋💋💋
+you are my everything babyyy 🥹🥹🥹🥹🥹 meri sab kuch ho aap 🥹🥹🥹🥹🥹🥹🥹🥹
+Again Happy Birthday My cuteee babyyy 🥹🥹🥹💋💋💋💋💋</p>
+            <button type="button" class="btn inline-next" id="step1Next">Next ➜ 💖</button>
+          </div>
+        </section>
+
+        <!-- STEP 2 : song video -->
+        <section class="step" data-step="2">
+          <div class="card player-card">
+            <video id="step2Video" class="song-video" src="assets/step2-gan.mp4" playsinline preload="metadata" aria-label="Tomar jonno gan"></video>
+            <div class="player-controls">
+              <button type="button" class="ctrl-btn primary" id="step2Play">▶ Play</button>
+              <button type="button" class="ctrl-btn" id="step2Pause">⏸ Pause</button>
+            </div>
+            <button type="button" class="btn inline-next" id="step2Next">Next ➜ 💖</button>
+          </div>
+        </section>
+
+        <!-- STEP 3 : lucky wheel -->
+        <section class="step" data-step="3">
+          <div class="card">
+            <h2 class="step-title">Tumi amar kase ki cao? 🥹</h2>
+            <div class="wheel-wrap">
+              <div class="wheel-pointer">🔻</div>
+              <canvas id="wheel" width="660" height="660"></canvas>
+            </div>
+            <button type="button" class="btn spin-btn" id="spinBtn">🎡 Spin</button>
+            <div class="wheel-result" id="wheelResult"></div>
+            <div class="congrats" id="wheelCongrats" hidden>Congratulation Babyy 😁😁😁😁💋💋💋💋💋💋</div>
+            <button type="button" class="btn ss-btn" id="ssBtn" hidden>SS nilam 📸</button>
+            <p class="wheel-note">Jeta asbe seta ss neo ar amake dekhao 📸</p>
+            <button type="button" class="btn inline-next" id="step3Next">Next ➜ 💖</button>
+          </div>
+        </section>
+
+        <!-- STEP 4 : archery game -->
+        <section class="step" data-step="4">
+          <div class="hud">
+            <span class="pill">💘 Fataiso: <span id="hudPops">0</span> / 10</span>
+            <span class="pill">🏹 Tir chora: <span id="hudShots">0</span></span>
+          </div>
+          <div id="archStage">
+            <div id="girl">👧🏹</div>
+            <div id="aimLine"></div>
+            <div id="target"><span id="heart">❤️</span><span id="boy">🧑</span></div>
+            <div id="arrowEl">➹</div>
+          </div>
+          <button type="button" class="btn shoot-btn" id="shootBtn">🏹 Tir choro</button>
+          <div class="arch-msg" id="archMsg">Aim line dekhe somoy moto tir choro! Miss hoile kintu minus hobe 😅</div>
+          <div class="arch-win" id="archWin" hidden>Lovee youuu myy Honey 💋💋💋💋💋💋💋💋💋💋</div>
+          <button type="button" class="btn inline-next" id="step4Next">Next ➜ 💖</button>
+        </section>
+
+        <!-- STEP 5 : photos + text -->
+        <section class="step" data-step="5">
+          <div class="photo-grid">
+            <img class="photo-img" src="assets/photo-1.jpg" alt="Romaisa golap hate park-e" loading="lazy" />
+            <img class="photo-img" src="assets/photo-2.jpg" alt="Romaisa golapi saree pore chade" loading="lazy" />
+            <img class="photo-img" src="assets/photo-3.jpg" alt="Romaisa noukay boshe nodir pare" loading="lazy" />
+            <img class="photo-img" src="assets/photo-4.jpg" alt="Romaisa kane ful diye" loading="lazy" />
+            <img class="photo-img" src="assets/photo-5.jpg" alt="Romaisa golapi hijab pore lake-er pare" loading="lazy" />
+          </div>
+          <div class="card">
+            <p class="letter-text">Apnake niye jai bolho na somoy furiye jabe
+Apnaker cokh kicu to ace ja amare eto pagol kore ja dekhte amar eto valo lage mon hoy caiyai thaki kokhono cokh er aral na hok kinntu ekhon to seta pari na ekhon asi apnar hasi bissas koren apnake hasle onek cute lageee 😫😫😫😫 eto joss lage ja bolar bahir a 🥹🥹🥹💋💋💋💋💋💋💋💋💋ar cul gran ufff seta to amar ekhono mone ace 🤭🫣🫣🫣 sei sei ota amar life er sera ekta muhurto 🥹🥹🥹💋💋💋💋💋💋💋 Apni eto sundor Masallah 🫣🫣🫣🫣🫣 Amar bou sei cute 🤭🤭🤭🤭 Alabhuuu my cutee babyyyy 🥹🥹🥹🥹🥹💋💋💋💋💋💋💋💋💋💋💋💋💋 Loveeee youuuu soooooo muchhh amar lokkhi bouu 💋💋💋💋💋💋💋💋💋💋💋</p>
+            <button type="button" class="btn inline-next" id="step5Next">Next ➜ 💖</button>
+          </div>
+        </section>
+
+        <!-- STEP 6 : horror video -->
+        <section class="step" data-step="6" id="step6Section">
+          <video id="step6Video" class="horror-video" src="assets/step6-voy.mp4" playsinline preload="auto" aria-label="Voy er video"></video>
+          <div class="card step6-after" id="step6After" hidden>
+            <p class="letter-text" style="text-align:center;">ki voy paisen bou Jan voy paiyen ami asi sob somoy apnar sathe 🤭🤭🤭🤭</p>
+            <button type="button" class="btn inline-next" id="step6Next">Next ➜ 💖</button>
+          </div>
+        </section>
+
+        <!-- STEP 7 : video -->
+        <section class="step" data-step="7">
+          <div class="card player-card">
+            <video id="step7Video" class="step7-video" src="assets/step7-video.mp4" playsinline preload="metadata" aria-label="Video"></video>
+            <div class="player-controls">
+              <button type="button" class="ctrl-btn primary" id="step7Play">▶ Play</button>
+              <button type="button" class="ctrl-btn" id="step7Pause">⏸ Pause</button>
+            </div>
+            <button type="button" class="btn inline-next" id="step7Next">Next ➜ 💖</button>
+          </div>
+        </section>
+
+        <!-- STEP 8 : marry question -->
+        <section class="step" data-step="8">
+          <div class="card">
+            <h2 class="step-title">Apni ki amake Biye korte can.? 🥹💍</h2>
+            <div class="options">
+              <button type="button" class="opt-btn" data-marry>1. Yes</button>
+              <button type="button" class="opt-btn" data-marry>2. Yeah</button>
+              <button type="button" class="opt-btn" data-marry>3. Ho</button>
+              <button type="button" class="opt-btn" data-marry>4. Hmm</button>
+            </div>
+            <div class="married-msg" id="marriedMsg" hidden>Now we are Married babyyy 😁😁💋💋💋💋 me husband and you are my cute wife 😁😁😁💋💋💋💋💋💋</div>
+            <button type="button" class="btn inline-next" id="step8Next">Next ➜ 💖</button>
+          </div>
+        </section>
+
+        <!-- STEP 9 : video -->
+        <section class="step" data-step="9">
+          <div class="card player-card">
+            <video id="step9Video" class="step9-video" src="assets/step9-video.mp4" playsinline preload="metadata" aria-label="Video"></video>
+            <div class="player-controls">
+              <button type="button" class="ctrl-btn primary" id="step9Play">▶ Play</button>
+              <button type="button" class="ctrl-btn" id="step9Pause">⏸ Pause</button>
+            </div>
+            <button type="button" class="btn inline-next" id="step9Next">Next ➜ 💖</button>
+          </div>
+        </section>
+
+        <!-- STEP 10 : photos + letter -->
+        <section class="step" data-step="10">
+          <div class="photo-grid">
+            <img class="photo-img" src="assets/step10-photo-1.jpg" alt="Shihab ar Romaisa ek sathe park-e dariye" loading="lazy" />
+            <img class="photo-img" src="assets/step10-photo-2.jpg" alt="Shihab ar Romaisa-r kacher selfie" loading="lazy" />
+            <img class="photo-img" src="assets/step10-photo-3.jpg" alt="Hat dhore thaka, angti pora hat" loading="lazy" />
+            <img class="photo-img" src="assets/step10-photo-4.jpg" alt="Shihab ar Romaisa-r pasapashi selfie" loading="lazy" />
+            <img class="photo-img" src="assets/step10-photo-5.jpg" alt="Rastay pasapashi hete jawa" loading="lazy" />
+          </div>
+          <div class="card">
+            <p class="letter-text">To Bou jaan
+Apnake niye ja bolbo sob kom hobe apnake osomvob valo bashiii 🥹🥹🥹🥹🥹🥹 ja bujaite parmu na Khub taratari apnake biye korbo cinta koiren na ektu somoy apnake tule asbo 🤭🤭🤭🤭 apnar kotha obek mone pore onek miss kori onek apnar kotha vabre valoi lage jokhon vabi auto ekta hasi cole ashe mukh 🥹🥹🥹🥹 Dua kori khushi thakbe susthoo thakuk allah apnar moner sob iccha puron koruk 🥹🥹🥹🥹 ami asi apnar pashe a sob somoy 😁😁😁😁😁 Love youuu Romaisaaaa pakhii 💋💋💋💋💋💋💋💋💋💋💋💋 Lovee soooo muchhhh Kolizaaa 🥹🥹🥹💋💋💋💋💋💋💋 ami amar bou jan re onekkk valo bashii 💋💋💋💋💋💋💋💋💋💋💋💋💋💋</p>
+            <p class="letter-from">— Your shihab 💖</p>
+            <button type="button" class="btn inline-next" id="step10Next">Next ➜ 💖</button>
+          </div>
+        </section>
+
+        <!-- FINAL -->
+        <section class="step" data-step="11">
+          <div class="final-wrap">
+            <div class="final-cake">🎂</div>
+            <div class="final-title">Happy Birthday<br />Bou jaaann 💖</div>
+            <p class="final-sub">Lovee youuu sooooo muchhhh 🥹💋💋💋💋💋</p>
+            <div class="the-end">— THE END —</div>
+          </div>
+        </section>
+
+      </div>
+
+      <div class="footer">
+        <button type="button" class="btn next-btn" id="nextBtn">Next ➜</button>
+      </div>
+    </div>
+
+    <div id="toast" role="status"></div>
+
+    <script>
+      (function () {
+        var TOTAL = 10;
+        var current = 0;
+        var archWon = false;
+        var married = false;
+        var ssPending = false;
+        var step6Ended = false;
+        var step6Started = false;
+
+        var lockView = document.getElementById('lockView');
+        var gameView = document.getElementById('gameView');
+        var stepCount = document.getElementById('stepCount');
+        var progressFill = document.getElementById('progressFill');
+        var nextBtn = document.getElementById('nextBtn');
+        var stage = document.getElementById('stage');
+        var toastEl = document.getElementById('toast');
+        var toastTimer = null;
+
+        function toast(msg) {
+          toastEl.textContent = msg;
+          toastEl.classList.add('show');
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 2200);
+        }
+
+        /* ---------- lock ---------- */
+        document.getElementById('lockForm').addEventListener('submit', function (e) {
+          e.preventDefault();
+          var val = document.getElementById('lockInput').value.trim().toLowerCase();
+          if (val === 'birthday girl') {
+            lockView.style.display = 'none';
+            gameView.style.display = 'flex';
+            showStep(1);
+          } else {
+            var err = document.getElementById('lockError');
+            err.textContent = 'Bhull password 😅 abar try koro';
+            var card = document.getElementById('lockCard');
+            card.classList.remove('shake');
+            void card.offsetWidth;
+            card.classList.add('shake');
+          }
+        });
+
+        /* ---------- navigation ---------- */
+        function showStep(n) {
+          if (n !== 2) {
+            var sv = document.getElementById('step2Video');
+            if (sv && !sv.paused) sv.pause();
+          }
+          if (n !== 6) {
+            var hv = document.getElementById('step6Video');
+            if (hv && !hv.paused) hv.pause();
+          }
+          if (n !== 7) {
+            var v7 = document.getElementById('step7Video');
+            if (v7 && !v7.paused) v7.pause();
+          }
+          if (n !== 9) {
+            var v9 = document.getElementById('step9Video');
+            if (v9 && !v9.paused) v9.pause();
+          }
+          current = n;
+          var sections = document.querySelectorAll('.step');
+          for (var i = 0; i < sections.length; i++) {
+            sections[i].classList.toggle('active', Number(sections[i].getAttribute('data-step')) === n);
+          }
+          stage.scrollTop = 0;
+          if (n <= TOTAL) {
+            stepCount.textContent = 'Step ' + n + ' / ' + TOTAL;
+            progressFill.style.width = (n / TOTAL * 100) + '%';
+          } else {
+            stepCount.textContent = '💖 Shesh';
+            progressFill.style.width = '100%';
+          }
+          updateNext();
+          if (n === 4) startAim();
+          else stopAim();
+          if (n === 6) startStep6();
+        }
+
+        function updateNext() {
+          if (current > TOTAL) { nextBtn.hidden = true; return; }
+          if (current === 3 && ssPending) { nextBtn.hidden = true; return; }
+          if (current === 4 && !archWon) { nextBtn.hidden = true; return; }
+          if (current === 6 && !step6Ended) { nextBtn.hidden = true; return; }
+          if (current === 8 && !married) { nextBtn.hidden = true; return; }
+          nextBtn.hidden = false;
+          nextBtn.textContent = current === TOTAL ? 'Next ➜ 💖' : 'Next ➜';
+        }
+
+        nextBtn.addEventListener('click', function () {
+          if (current < TOTAL + 1) showStep(current + 1);
+        });
+
+        document.getElementById('step1Next').addEventListener('click', function () {
+          showStep(2);
+        });
+
+        /* ---------- step 2 : song video ---------- */
+        var step2Video = document.getElementById('step2Video');
+        document.getElementById('step2Play').addEventListener('click', function () {
+          var p = step2Video.play();
+          if (p && p.catch) p.catch(function () { toast('Video cholche na, abar try koro 🎵'); });
+        });
+        document.getElementById('step2Pause').addEventListener('click', function () {
+          step2Video.pause();
+        });
+        document.getElementById('step2Next').addEventListener('click', function () {
+          showStep(3);
+        });
+        var videoBtns = document.querySelectorAll('[data-video-btn]');
+        for (var v = 0; v < videoBtns.length; v++) {
+          videoBtns[v].addEventListener('click', function () { toast('Video ekhono add hoy nai 🎬 pore add hobe'); });
+        }
+
+        /* ---------- lucky wheel ---------- */
+        var prizes = ['Kiss 💋', 'Hug 🤗', 'Valobasha ❤️', 'Secret Jinish 🤫', 'Ador 🥰', 'Letter 💌'];
+        var wheelColors = ['#e8447c', '#ff7ba2', '#f06292', '#ff9eb8', '#d6336c', '#ffa8c5'];
+        var wheel = document.getElementById('wheel');
+        var wctx = wheel.getContext('2d');
+        var W = 660, C = W / 2, R = C - 8;
+        function drawWheel() {
+          var seg = Math.PI * 2 / prizes.length;
+          for (var i = 0; i < prizes.length; i++) {
+            var start = -Math.PI / 2 + i * seg;
+            wctx.beginPath();
+            wctx.moveTo(C, C);
+            wctx.arc(C, C, R, start, start + seg);
+            wctx.closePath();
+            wctx.fillStyle = wheelColors[i];
+            wctx.fill();
+            wctx.strokeStyle = 'rgba(255,255,255,0.85)';
+            wctx.lineWidth = 4;
+            wctx.stroke();
+            wctx.save();
+            wctx.translate(C, C);
+            wctx.rotate(start + seg / 2);
+            wctx.textAlign = 'right';
+            wctx.fillStyle = '#fff';
+            wctx.font = '700 34px Poppins, sans-serif';
+            wctx.fillText(prizes[i], R - 26, 12);
+            wctx.restore();
+          }
+          wctx.beginPath();
+          wctx.arc(C, C, 52, 0, Math.PI * 2);
+          wctx.fillStyle = '#fff';
+          wctx.fill();
+          wctx.font = '44px sans-serif';
+          wctx.textAlign = 'center';
+          wctx.fillText('💖', C, C + 16);
+        }
+        drawWheel();
+
+        var rotation = 0, spinning = false, spinCount = 0;
+        var spinBtn = document.getElementById('spinBtn');
+        var step3NextBtn = document.getElementById('step3Next');
+        var ssBtn = document.getElementById('ssBtn');
+        spinBtn.addEventListener('click', function () {
+          if (spinning || ssPending) return;
+          spinning = true;
+          spinCount++;
+          document.getElementById('wheelResult').textContent = '';
+          document.getElementById('wheelCongrats').hidden = true;
+          var desiredIdx;
+          if (spinCount === 1) desiredIdx = 1;      /* prothom spin: Hug */
+          else if (spinCount === 2) desiredIdx = 0; /* dwitiyo spin: Kiss */
+          else desiredIdx = Math.floor(Math.random() * prizes.length);
+          var desiredRem = ((330 - desiredIdx * 60) % 360 + 360) % 360;
+          var currentRem = ((rotation % 360) + 360) % 360;
+          var delta = ((desiredRem - currentRem) % 360 + 360) % 360;
+          var extra = 360 * 5 + delta;
+          var target = rotation + extra;
+          var anim = wheel.animate(
+            [{ transform: 'rotate(' + rotation + 'deg)' }, { transform: 'rotate(' + target + 'deg)' }],
+            { duration: 4200, easing: 'cubic-bezier(0.12, 0.8, 0.08, 1)', fill: 'forwards' }
+          );
+          rotation = target;
+          anim.onfinish = function () {
+            spinning = false;
+            document.getElementById('wheelResult').textContent = 'Tumi paiso: ' + prizes[desiredIdx] + ' 🎉';
+            document.getElementById('wheelCongrats').hidden = false;
+            /* SS na neoa porjonto spin ar next bondho */
+            ssPending = true;
+            spinBtn.disabled = true;
+            step3NextBtn.disabled = true;
+            ssBtn.hidden = false;
+            updateNext();
+          };
+        });
+
+        ssBtn.addEventListener('click', function () {
+          ssPending = false;
+          spinBtn.disabled = false;
+          step3NextBtn.disabled = false;
+          ssBtn.hidden = true;
+          updateNext();
+        });
+
+        document.getElementById('step3Next').addEventListener('click', function () {
+          showStep(4);
+        });
+
+        document.getElementById('step5Next').addEventListener('click', function () {
+          showStep(6);
+        });
+
+        /* ---------- step 6 : horror video ---------- */
+        var step6Video = document.getElementById('step6Video');
+        var step6After = document.getElementById('step6After');
+        function playStep6() {
+          step6Video.muted = false;
+          step6Video.volume = 0.85; /* ektu beshi sound, kintu max na */
+          var p = step6Video.play();
+          if (p && p.then) {
+            p.then(function () { step6Started = true; }).catch(function () {
+              /* autoplay block hoile prothom tap-e cholbe */
+            });
+          } else {
+            step6Started = true;
+          }
+        }
+        function startStep6() {
+          if (step6Ended) return;
+          step6Video.currentTime = 0;
+          playStep6();
+        }
+        step6Video.addEventListener('ended', function () {
+          step6Ended = true;
+          step6After.hidden = false;
+          updateNext();
+        });
+        /* autoplay block hoile Step 6-e prothom tap-ei video cholbe */
+        document.getElementById('step6Section').addEventListener('pointerdown', function () {
+          if (current === 6 && !step6Started && !step6Ended) playStep6();
+        });
+        document.getElementById('step6Next').addEventListener('click', function () {
+          showStep(7);
+        });
+
+        /* ---------- step 7 : video ---------- */
+        var step7Video = document.getElementById('step7Video');
+        document.getElementById('step7Play').addEventListener('click', function () {
+          var p = step7Video.play();
+          if (p && p.catch) p.catch(function () { toast('Video cholche na, abar try koro 🎬'); });
+        });
+        document.getElementById('step7Pause').addEventListener('click', function () {
+          step7Video.pause();
+        });
+        document.getElementById('step7Next').addEventListener('click', function () {
+          showStep(8);
+        });
+
+        /* ---------- step 9 : video ---------- */
+        var step9Video = document.getElementById('step9Video');
+        document.getElementById('step9Play').addEventListener('click', function () {
+          var p = step9Video.play();
+          if (p && p.catch) p.catch(function () { toast('Video cholche na, abar try koro 🎬'); });
+        });
+        document.getElementById('step9Pause').addEventListener('click', function () {
+          step9Video.pause();
+        });
+        document.getElementById('step9Next').addEventListener('click', function () {
+          showStep(10);
+        });
+        document.getElementById('step10Next').addEventListener('click', function () {
+          showStep(11);
+        });
+
+        document.getElementById('step4Next').addEventListener('click', function () {
+          if (!archWon) {
+            toast('Age 10 ta heart fatao pakhi! 💘 Tarpor Next hobe');
+            return;
+          }
+          showStep(5);
+        });
+
+        /* ---------- step 8 : marry ---------- */
+        var marryBtns = document.querySelectorAll('[data-marry]');
+        for (var m = 0; m < marryBtns.length; m++) {
+          marryBtns[m].addEventListener('click', function () {
+            for (var j = 0; j < marryBtns.length; j++) marryBtns[j].classList.remove('picked');
+            this.classList.add('picked');
+            married = true;
+            document.getElementById('marriedMsg').hidden = false;
+            updateNext();
+          });
+        }
+        document.getElementById('step8Next').addEventListener('click', function () {
+          if (!married) {
+            toast('Age ekta answer dao pakhi! 🥹💍 Tarpor Next hobe');
+            return;
+          }
+          showStep(9);
+        });
+
+        /* ---------- step 4 : archery ---------- */
+        var archStage = document.getElementById('archStage');
+        var aimLine = document.getElementById('aimLine');
+        var target = document.getElementById('target');
+        var heart = document.getElementById('heart');
+        var arrowEl = document.getElementById('arrowEl');
+        var shootBtn = document.getElementById('shootBtn');
+        var hudPops = document.getElementById('hudPops');
+        var hudShots = document.getElementById('hudShots');
+        var archMsg = document.getElementById('archMsg');
+        var pops = 0, shots = 0, aimY = 170, aimDir = 1, aimRaf = null, shooting = false;
+
+        function stageH() { return archStage.clientHeight; }
+        function aimSpeed() { return 1.5 + pops * 0.38; }
+
+        function startAim() {
+          if (aimRaf !== null || archWon) return;
+          var last = null;
+          function frame(ts) {
+            if (last === null) last = ts;
+            var dt = Math.min(40, ts - last); last = ts;
+            aimY += aimDir * aimSpeed() * (dt / 16.7);
+            if (aimY > stageH() - 26) { aimY = stageH() - 26; aimDir = -1; }
+            if (aimY < 26) { aimY = 26; aimDir = 1; }
+            aimLine.style.top = aimY + 'px';
+            aimRaf = requestAnimationFrame(frame);
+          }
+          aimRaf = requestAnimationFrame(frame);
+        }
+        function stopAim() {
+          if (aimRaf !== null) { cancelAnimationFrame(aimRaf); aimRaf = null; }
+        }
+
+        function moveTarget() {
+          var h = stageH();
+          var top = 14 + Math.random() * Math.max(40, h - 130);
+          var right = 8 + Math.random() * 64;
+          target.style.top = top + 'px';
+          target.style.right = right + 'px';
+          heart.style.animationDuration = Math.max(0.35, 1.1 - pops * 0.08) + 's';
+        }
+        moveTarget();
+
+        function floatNote(text, x, y) {
+          var note = document.createElement('div');
+          note.className = 'float-note';
+          note.textContent = text;
+          note.style.left = x + 'px';
+          note.style.top = y + 'px';
+          archStage.appendChild(note);
+          setTimeout(function () { note.remove(); }, 950);
+        }
+
+        shootBtn.addEventListener('click', function () {
+          if (shooting || archWon) return;
+          shooting = true;
+          shots++;
+          hudShots.textContent = shots;
+          var fireY = aimY;
+          var stageRect = archStage.getBoundingClientRect();
+          var heartRect = heart.getBoundingClientRect();
+          var endX = heartRect.left - stageRect.left - 6;
+          arrowEl.style.display = 'block';
+          arrowEl.style.left = '64px';
+          arrowEl.style.top = (fireY - 15) + 'px';
+          var dist = Math.max(60, endX - 64);
+          var anim = arrowEl.animate(
+            [{ transform: 'translateX(0)' }, { transform: 'translateX(' + dist + 'px)' }],
+            { duration: 320, easing: 'linear', fill: 'forwards' }
+          );
+          anim.onfinish = function () {
+            arrowEl.style.display = 'none';
+            shooting = false;
+            var hr = heart.getBoundingClientRect();
+            var heartCY = hr.top + hr.height / 2 - stageRect.top;
+            var hit = Math.abs(fireY - heartCY) <= 40;
+            if (hit) {
+              pops++;
+              hudPops.textContent = pops;
+              floatNote('💥 Fatlo!', hr.left - stageRect.left - 10, hr.top - stageRect.top - 8);
+              archMsg.textContent = 'Darun! 💘 ' + pops + ' ta fatlo, aro ' + (10 - pops) + ' ta baki';
+              if (pops >= 10) {
+                archWon = true;
+                stopAim();
+                document.getElementById('archWin').hidden = false;
+                archMsg.textContent = '10 tai fatay diso! 🎉🏹';
+                shootBtn.disabled = true;
+                shootBtn.style.opacity = '0.5';
+                updateNext();
+              } else {
+                moveTarget();
+              }
+            } else {
+              if (pops > 0) pops--;
+              hudPops.textContent = pops;
+              floatNote('Miss! 😅 -1', 90, fireY - 30);
+              archMsg.textContent = 'Miss! 😅 Ekta minus hoilo. Abar try koro pakhi!';
+              heart.style.animationDuration = Math.max(0.35, 1.1 - pops * 0.08) + 's';
+            }
+          };
+        });
+      })();
+    </script>
+  </body>
+</html>
