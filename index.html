@@ -126,6 +126,7 @@
         background: linear-gradient(135deg, var(--accent), var(--accent-dark));
         box-shadow: 0 8px 20px rgba(201, 42, 94, 0.35);
       }
+      .inline-next[hidden] { display: none; }
 
       /* ---------- media slots ---------- */
       .slot {
@@ -236,6 +237,24 @@
       }
       .letter-from { text-align: right; font-weight: 700; margin-top: 14px; }
 
+      /* ---------- step 10 : sliding puzzle ---------- */
+      .puzzle-board {
+        display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
+        gap: 4px; width: min(78vw, 264px); aspect-ratio: 3 / 4;
+        margin: 2px auto 0; padding: 4px;
+        background: var(--stage); border: 1px solid var(--border); border-radius: 14px;
+      }
+      .puzzle-count { text-align: center; color: var(--muted); font-size: 14.5px; font-weight: 600; margin: -6px 0 12px; }
+      .puzzle-tile {
+        border: none; border-radius: 7px; padding: 0; min-height: 0;
+        background-size: 300% 300%; background-repeat: no-repeat;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+        -webkit-tap-highlight-color: transparent;
+      }
+      .puzzle-tile.empty { background: var(--accent-soft); box-shadow: none; cursor: default; }
+      .puzzle-note { text-align: center; color: var(--muted); font-size: 14px; margin: 10px 0 0; }
+      .puzzle-msg { text-align: center; font-size: 19px; font-weight: 700; margin-top: 12px; min-height: 28px; }
+
       /* ---------- final ---------- */
       .final-wrap { text-align: center; padding-top: 26px; }
       .final-cake { font-size: 84px; line-height: 1.1; }
@@ -281,7 +300,7 @@
     <div id="gameView">
       <div class="topbar">
         <div class="name">💖 Pagli r Jonmodin</div>
-        <div class="step-count" id="stepCount">Step 1 / 10</div>
+        <div class="step-count" id="stepCount">Step 1 / 11</div>
       </div>
       <div class="progress"><div id="progressFill"></div></div>
 
@@ -416,8 +435,20 @@ Apnaker cokh kicu to ace ja amare eto pagol kore ja dekhte amar eto valo lage mo
           </div>
         </section>
 
-        <!-- STEP 10 : photos + letter -->
+        <!-- STEP 10 : photo puzzle -->
         <section class="step" data-step="10">
+          <div class="card">
+            <h2 class="step-title">Cobi ta milao 🧩</h2>
+            <p class="puzzle-count" id="puzzleCount">Cobi 1 / 3</p>
+            <div class="puzzle-board" id="puzzleBoard"></div>
+            <p class="puzzle-note">Khali jaygar pasher tile-e tap korle tile sore jabe — puro cobi ta milao 💖</p>
+            <div class="puzzle-msg" id="puzzleMsg"></div>
+            <button type="button" class="btn inline-next" id="puzzleNext" hidden>Next ➜ 💖</button>
+          </div>
+        </section>
+
+        <!-- STEP 11 : photos + letter -->
+        <section class="step" data-step="11">
           <div class="photo-grid">
             <img class="photo-img" src="assets/step10-photo-1.jpg" alt="Shihab ar Romaisa ek sathe park-e dariye" loading="lazy" />
             <img class="photo-img" src="assets/step10-photo-2.jpg" alt="Shihab ar Romaisa-r kacher selfie" loading="lazy" />
@@ -429,12 +460,12 @@ Apnaker cokh kicu to ace ja amare eto pagol kore ja dekhte amar eto valo lage mo
             <p class="letter-text">To Bou jaan
 Apnake niye ja bolbo sob kom hobe apnake osomvob valo bashiii 🥹🥹🥹🥹🥹🥹 ja bujaite parmu na Khub taratari apnake biye korbo cinta koiren na ektu somoy apnake tule asbo 🤭🤭🤭🤭 apnar kotha obek mone pore onek miss kori onek apnar kotha vabre valoi lage jokhon vabi auto ekta hasi cole ashe mukh 🥹🥹🥹🥹 Dua kori khushi thakbe susthoo thakuk allah apnar moner sob iccha puron koruk 🥹🥹🥹🥹 ami asi apnar pashe a sob somoy 😁😁😁😁😁 Love youuu Romaisaaaa pakhii 💋💋💋💋💋💋💋💋💋💋💋💋 Lovee soooo muchhhh Kolizaaa 🥹🥹🥹💋💋💋💋💋💋💋 ami amar bou jan re onekkk valo bashii 💋💋💋💋💋💋💋💋💋💋💋💋💋💋</p>
             <p class="letter-from">— Your shihab 💖</p>
-            <button type="button" class="btn inline-next" id="step10Next">Next ➜ 💖</button>
+            <button type="button" class="btn inline-next" id="step11Next">Next ➜ 💖</button>
           </div>
         </section>
 
         <!-- FINAL -->
-        <section class="step" data-step="11">
+        <section class="step" data-step="12">
           <div class="final-wrap">
             <div class="final-cake">🎂</div>
             <div class="final-title">Happy Birthday<br />Bou jaaann 💖</div>
@@ -450,7 +481,7 @@ Apnake niye ja bolbo sob kom hobe apnake osomvob valo bashiii 🥹🥹🥹🥹�
 
     <script>
       (function () {
-        var TOTAL = 10;
+        var TOTAL = 11;
         var current = 0;
         var archWon = false;
         var married = false;
@@ -525,6 +556,7 @@ Apnake niye ja bolbo sob kom hobe apnake osomvob valo bashiii 🥹🥹🥹🥹�
           if (n === 4) startAim();
           else stopAim();
           if (n === 6) startStep6();
+          if (n === 10 && !puzzleStarted) { puzzleStarted = true; startPuzzle(0); }
         }
 
         document.getElementById('step1Next').addEventListener('click', function () {
@@ -694,8 +726,8 @@ Apnake niye ja bolbo sob kom hobe apnake osomvob valo bashiii 🥹🥹🥹🥹�
         document.getElementById('step9Next').addEventListener('click', function () {
           showStep(10);
         });
-        document.getElementById('step10Next').addEventListener('click', function () {
-          showStep(11);
+        document.getElementById('step11Next').addEventListener('click', function () {
+          showStep(12);
         });
 
         document.getElementById('step4Next').addEventListener('click', function () {
@@ -824,6 +856,105 @@ Apnake niye ja bolbo sob kom hobe apnake osomvob valo bashiii 🥹🥹🥹🥹�
             }
           };
         });
+
+        /* ---------- step 10 : sliding puzzle ---------- */
+        var puzzlePhotos = ['assets/puzzle-1.jpg', 'assets/puzzle-2.jpg', 'assets/puzzle-3.jpg'];
+        var puzzleBoard = document.getElementById('puzzleBoard');
+        var puzzleCount = document.getElementById('puzzleCount');
+        var puzzleMsg = document.getElementById('puzzleMsg');
+        var puzzleNextBtn = document.getElementById('puzzleNext');
+        var puzzleIdx = 0, puzzleTiles = [], puzzleState = [], puzzleSolved = false, puzzleStarted = false;
+
+        for (var pi = 0; pi < puzzlePhotos.length; pi++) {
+          var pre = new Image();
+          pre.src = puzzlePhotos[pi];
+        }
+
+        function buildPuzzleBoard() {
+          puzzleBoard.innerHTML = '';
+          puzzleTiles = [];
+          for (var i = 0; i < 9; i++) {
+            var t = document.createElement('button');
+            t.type = 'button';
+            t.className = 'puzzle-tile';
+            t.setAttribute('aria-label', 'Puzzle tile');
+            (function (pos) {
+              t.addEventListener('click', function () { tapTile(pos); });
+            })(i);
+            puzzleBoard.appendChild(t);
+            puzzleTiles.push(t);
+          }
+        }
+
+        function renderPuzzle() {
+          for (var pos = 0; pos < 9; pos++) {
+            var v = puzzleState[pos];
+            var tile = puzzleTiles[pos];
+            if (v === 8) {
+              tile.classList.add('empty');
+              tile.style.backgroundImage = 'none';
+            } else {
+              tile.classList.remove('empty');
+              tile.style.backgroundImage = 'url("' + puzzlePhotos[puzzleIdx] + '")';
+              tile.style.backgroundPosition = ((v % 3) * 50) + '% ' + (Math.floor(v / 3) * 50) + '%';
+            }
+          }
+        }
+
+        function isSolved() {
+          for (var i = 0; i < 9; i++) if (puzzleState[i] !== i) return false;
+          return true;
+        }
+
+        function startPuzzle(idx) {
+          puzzleIdx = idx;
+          puzzleSolved = false;
+          puzzleCount.textContent = 'Cobi ' + (idx + 1) + ' / 3';
+          puzzleMsg.textContent = '';
+          puzzleNextBtn.hidden = true;
+          /* solved obostha theke random valid move kore shuffle — tai shuffle sob somoy solvable */
+          puzzleState = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+          var blank = 8, prev = -1;
+          for (var k = 0; k < 80; k++) {
+            var opts = [];
+            var r = Math.floor(blank / 3), c = blank % 3;
+            if (r > 0 && blank - 3 !== prev) opts.push(blank - 3);
+            if (r < 2 && blank + 3 !== prev) opts.push(blank + 3);
+            if (c > 0 && blank - 1 !== prev) opts.push(blank - 1);
+            if (c < 2 && blank + 1 !== prev) opts.push(blank + 1);
+            var pick = opts[Math.floor(Math.random() * opts.length)];
+            puzzleState[blank] = puzzleState[pick];
+            puzzleState[pick] = 8;
+            prev = blank;
+            blank = pick;
+          }
+          if (isSolved()) { startPuzzle(idx); return; }
+          renderPuzzle();
+        }
+
+        function tapTile(pos) {
+          if (puzzleSolved) return;
+          var blank = puzzleState.indexOf(8);
+          var r = Math.floor(pos / 3), c = pos % 3;
+          var br = Math.floor(blank / 3), bc = blank % 3;
+          if (Math.abs(r - br) + Math.abs(c - bc) !== 1) return;
+          puzzleState[blank] = puzzleState[pos];
+          puzzleState[pos] = 8;
+          renderPuzzle();
+          if (isSolved()) {
+            puzzleSolved = true;
+            puzzleMsg.textContent = puzzleIdx < 2 ? 'Hoise! Cobi ta mile gese 🎉💖' : 'Hoise! Last cobi tao mile gese 🎉💖';
+            puzzleNextBtn.hidden = false;
+          }
+        }
+
+        puzzleNextBtn.addEventListener('click', function () {
+          if (!puzzleSolved) return;
+          if (puzzleIdx < 2) startPuzzle(puzzleIdx + 1);
+          else showStep(11);
+        });
+
+        buildPuzzleBoard();
       })();
     </script>
   </body>
