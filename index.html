@@ -120,19 +120,6 @@
       .letter-text { font-size: 16.5px; line-height: 1.75; white-space: pre-wrap; word-break: break-word; margin: 0; }
       h2.step-title { font-size: 21px; margin: 0 0 14px; text-align: center; }
 
-      .footer {
-        padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
-        background: var(--card); border-top: 1px solid var(--border);
-        display: flex; justify-content: center; align-items: center; min-height: 78px;
-      }
-      .next-btn {
-        font-size: 18px; font-weight: 700; padding: 14px 44px; border-radius: 999px;
-        min-width: min(78vw, 320px); min-height: 54px;
-        background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-        box-shadow: 0 8px 20px rgba(201, 42, 94, 0.35);
-      }
-      .next-btn:hover { background: linear-gradient(135deg, var(--accent), var(--accent-dark)); filter: brightness(1.07); }
-      .next-btn[hidden] { display: none; }
       .inline-next {
         display: block; margin: 22px auto 4px; font-size: 18px; font-weight: 700;
         padding: 14px 44px; border-radius: 999px; min-width: min(78vw, 320px); min-height: 54px;
@@ -457,10 +444,6 @@ Apnake niye ja bolbo sob kom hobe apnake osomvob valo bashiii 🥹🥹🥹🥹�
         </section>
 
       </div>
-
-      <div class="footer">
-        <button type="button" class="btn next-btn" id="nextBtn">Next ➜</button>
-      </div>
     </div>
 
     <div id="toast" role="status"></div>
@@ -479,7 +462,6 @@ Apnake niye ja bolbo sob kom hobe apnake osomvob valo bashiii 🥹🥹🥹🥹�
         var gameView = document.getElementById('gameView');
         var stepCount = document.getElementById('stepCount');
         var progressFill = document.getElementById('progressFill');
-        var nextBtn = document.getElementById('nextBtn');
         var stage = document.getElementById('stage');
         var toastEl = document.getElementById('toast');
         var toastTimer = null;
@@ -540,25 +522,10 @@ Apnake niye ja bolbo sob kom hobe apnake osomvob valo bashiii 🥹🥹🥹🥹�
             stepCount.textContent = '💖 Shesh';
             progressFill.style.width = '100%';
           }
-          updateNext();
           if (n === 4) startAim();
           else stopAim();
           if (n === 6) startStep6();
         }
-
-        function updateNext() {
-          if (current > TOTAL) { nextBtn.hidden = true; return; }
-          if (current === 3 && ssPending) { nextBtn.hidden = true; return; }
-          if (current === 4 && !archWon) { nextBtn.hidden = true; return; }
-          if (current === 6 && !step6Ended) { nextBtn.hidden = true; return; }
-          if (current === 8 && !married) { nextBtn.hidden = true; return; }
-          nextBtn.hidden = false;
-          nextBtn.textContent = current === TOTAL ? 'Next ➜ 💖' : 'Next ➜';
-        }
-
-        nextBtn.addEventListener('click', function () {
-          if (current < TOTAL + 1) showStep(current + 1);
-        });
 
         document.getElementById('step1Next').addEventListener('click', function () {
           showStep(2);
@@ -652,7 +619,6 @@ Apnake niye ja bolbo sob kom hobe apnake osomvob valo bashiii 🥹🥹🥹🥹�
             spinBtn.disabled = true;
             step3NextBtn.disabled = true;
             ssBtn.hidden = false;
-            updateNext();
           };
         });
 
@@ -661,7 +627,6 @@ Apnake niye ja bolbo sob kom hobe apnake osomvob valo bashiii 🥹🥹🥹🥹�
           spinBtn.disabled = false;
           step3NextBtn.disabled = false;
           ssBtn.hidden = true;
-          updateNext();
         });
 
         document.getElementById('step3Next').addEventListener('click', function () {
@@ -695,7 +660,6 @@ Apnake niye ja bolbo sob kom hobe apnake osomvob valo bashiii 🥹🥹🥹🥹�
         step6Video.addEventListener('ended', function () {
           step6Ended = true;
           step6After.hidden = false;
-          updateNext();
         });
         /* autoplay block hoile Step 6-e prothom tap-ei video cholbe */
         document.getElementById('step6Section').addEventListener('pointerdown', function () {
@@ -750,7 +714,6 @@ Apnake niye ja bolbo sob kom hobe apnake osomvob valo bashiii 🥹🥹🥹🥹�
             this.classList.add('picked');
             married = true;
             document.getElementById('marriedMsg').hidden = false;
-            updateNext();
           });
         }
         document.getElementById('step8Next').addEventListener('click', function () {
@@ -849,7 +812,6 @@ Apnake niye ja bolbo sob kom hobe apnake osomvob valo bashiii 🥹🥹🥹🥹�
                 archMsg.textContent = '10 tai fatay diso! 🎉🏹';
                 shootBtn.disabled = true;
                 shootBtn.style.opacity = '0.5';
-                updateNext();
               } else {
                 moveTarget();
               }
